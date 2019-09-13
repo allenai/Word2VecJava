@@ -1,42 +1,52 @@
 import sbt._
-import org.allenai.plugins.CoreDependencies
-import org.allenai.plugins.CoreDependencies._
-import sbtrelease._
 import sbtrelease.ReleaseStateTransformations._
 
 name := "Word2VecJava"
 
-libraryDependencies ++= Seq(
-  "org.apache.commons" % "commons-lang3" % "3.1",
-  "com.google.guava" % "guava" % "18.0",
-  "commons-io" % "commons-io" % "2.4",
-  "log4j" % "log4j" % "1.2.17",
-  "joda-time" % "joda-time" % "2.3",
-  "org.apache.thrift" % "libfb303" % "0.9.1",
-  "org.apache.commons" % "commons-math3" % "3.4.1",
-  "org.scalacheck" %% "scalacheck" % "1.12.0" % Test,
-  "com.novocode" % "junit-interface" % "0.11" % Test)
+lazy val scala212 = "2.12.9"
+lazy val scala211 = "2.11.12"
+lazy val scala213 = "2.13.0"
+lazy val supportedScalaVersions = List(scala212, scala211, scala213)
 
-// Override the problematic new release plugin.
-lazy val releaseProcessSetting = releaseProcess := Seq(
-  checkSnapshotDependencies,
-  inquireVersions,
-  runClean,
-  runTest,
-  setReleaseVersion,
-  commitReleaseVersion,
-  tagRelease,
-  publishArtifacts,
-  setNextVersion,
-  commitNextVersion,
-  pushChanges
-)
+ThisBuild / organization := "org.allenai.word2vec"
+ThisBuild / scalaVersion := scala212
 
+lazy val root = (project in file("."))
+    .settings(
+      crossScalaVersions := supportedScalaVersions,
+      name := "Word2VecJava",
+      buildSettings,
+      libraryDependencies ++= Seq(
+        "org.apache.commons" % "commons-lang3" % "3.9",
+        "com.google.guava" % "guava" % "18.0",
+        "commons-io" % "commons-io" % "2.4",
+        "log4j" % "log4j" % "1.2.17",
+        "joda-time" % "joda-time" % "2.3",
+        "org.apache.thrift" % "libfb303" % "0.9.3",
+        "org.apache.commons" % "commons-math3" % "3.6.1",
+        "org.scalacheck" %% "scalacheck" % "1.14.0" % Test,
+        "com.novocode" % "junit-interface" % "0.11" % Test
+      ),
+
+      // don't use sbt-release's cross facility
+      releaseCrossBuild := false,
+      releaseProcess := Seq[ReleaseStep](
+        checkSnapshotDependencies,
+        inquireVersions,
+        runClean,
+        releaseStepCommandAndRemaining("+test"),
+        setReleaseVersion,
+        commitReleaseVersion,
+        tagRelease,
+        releaseStepCommandAndRemaining("+publishSigned"),
+        setNextVersion,
+        commitNextVersion,
+        pushChanges
+      )
+    )
 
 lazy val buildSettings = Seq(
   organization := "org.allenai.word2vec",
-  crossScalaVersions := Seq(defaultScalaVersion),
-  scalaVersion <<= crossScalaVersions { (vs: Seq[String]) => vs.head },
   publishMavenStyle := true,
   publishArtifact in Test := false,
   pomIncludeRepository := { _ => false },
@@ -46,22 +56,11 @@ lazy val buildSettings = Seq(
     url("https://github.com/allenai/Word2VecJava"),
     "https://github.com/allenai/Word2VecJava.git")),
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-  bintrayPackage := s"${organization.value}:${name.value}_${scalaBinaryVersion.value}",
   pomExtra :=
-    <developers>
-      <developer>
-        <id>allenai-dev-role</id>
-        <name>Allen Institute for Artificial Intelligence</name>
-        <email>dev-role@allenai.org</email>
-      </developer>
-    </developers>)
-
-javacOptions in doc := Seq(
-  "-source", "1.7",
-  "-Xdoclint:none")
-
-lazy val word2vecjavaRoot = Project(
-  id = "word2vecjavaRoot",
-  base = file("."),
-  settings = buildSettings ++ releaseProcessSetting
-).enablePlugins(LibraryPlugin)
+      <developers>
+        <developer>
+          <id>allenai-dev-role</id>
+          <name>Allen Institute for Artificial Intelligence</name>
+          <email>dev-role@allenai.org</email>
+        </developer>
+      </developers>)

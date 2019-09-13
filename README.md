@@ -1,5 +1,6 @@
 # Word2vecJava
 
+[![CircleCI](https://circleci.com/gh/allenai/Word2VecJava.svg?style=svg)](https://circleci.com/gh/allenai/Word2VecJava)
 
 This is a fork of the open source Java implementation of word2vec (https://github.com/medallia/Word2VecJava) ported to work with SBT, and has some fixes to support large models. 
 
