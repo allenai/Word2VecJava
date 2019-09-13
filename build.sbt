@@ -1,5 +1,4 @@
 import sbt._
-import sbtrelease.ReleaseStateTransformations._
 
 name := "Word2VecJava"
 
@@ -10,12 +9,30 @@ lazy val supportedScalaVersions = List(scala212, scala211, scala213)
 
 ThisBuild / organization := "org.allenai.word2vec"
 ThisBuild / scalaVersion := scala212
+ThisBuild / version      := "2.0.0"
 
 lazy val root = (project in file("."))
     .settings(
+      organization := "org.allenai.word2vec",
+      publishMavenStyle := true,
+      publishArtifact in Test := false,
+      pomIncludeRepository := { _ => false },
+      licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html")),
+      homepage := Some(url("https://github.com/allenai/Word2VecJava")),
+      scmInfo := Some(ScmInfo(
+        url("https://github.com/allenai/Word2VecJava"),
+        "https://github.com/allenai/Word2VecJava.git")),
+      pomExtra :=
+          <developers>
+            <developer>
+              <id>allenai-dev-role</id>
+              <name>Allen Institute for Artificial Intelligence</name>
+              <email>dev-role@allenai.org</email>
+            </developer>
+          </developers>,
+      resolvers ++= Seq(Resolver.bintrayRepo("allenai", "maven")),
       crossScalaVersions := supportedScalaVersions,
       name := "Word2VecJava",
-      buildSettings,
       libraryDependencies ++= Seq(
         "org.apache.commons" % "commons-lang3" % "3.9",
         "com.google.guava" % "guava" % "18.0",
@@ -27,40 +44,7 @@ lazy val root = (project in file("."))
         "org.scalacheck" %% "scalacheck" % "1.14.0" % Test,
         "com.novocode" % "junit-interface" % "0.11" % Test
       ),
-
-      // don't use sbt-release's cross facility
-      releaseCrossBuild := false,
-      releaseProcess := Seq[ReleaseStep](
-        checkSnapshotDependencies,
-        inquireVersions,
-        runClean,
-        releaseStepCommandAndRemaining("+test"),
-        setReleaseVersion,
-        commitReleaseVersion,
-        tagRelease,
-        releaseStepCommandAndRemaining("+publishSigned"),
-        setNextVersion,
-        commitNextVersion,
-        pushChanges
-      )
-    )
-
-lazy val buildSettings = Seq(
-  organization := "org.allenai.word2vec",
-  publishMavenStyle := true,
-  publishArtifact in Test := false,
-  pomIncludeRepository := { _ => false },
-  licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html")),
-  homepage := Some(url("https://github.com/allenai/Word2VecJava")),
-  scmInfo := Some(ScmInfo(
-    url("https://github.com/allenai/Word2VecJava"),
-    "https://github.com/allenai/Word2VecJava.git")),
-  releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-  pomExtra :=
-      <developers>
-        <developer>
-          <id>allenai-dev-role</id>
-          <name>Allen Institute for Artificial Intelligence</name>
-          <email>dev-role@allenai.org</email>
-        </developer>
-      </developers>)
+      bintrayPackage := s"${organization.value}:${name.value}_${scalaBinaryVersion.value}",
+      bintrayOrganization := Some("allenai"),
+      bintrayRepository := "maven"
+)
